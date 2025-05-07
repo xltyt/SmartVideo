@@ -1,0 +1,240 @@
+CURRENT_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(shell dirname $(CURRENT_PATH))
+DATE = $(shell date "+%Y%m%d%H")
+
+MODE ?= cpu
+CUDA_VERSION ?= 12.2
+PLATFORM ?= amd64
+
+VERSION=$(shell awk -F'|' '{print $$2}' ../../README.md | sed '/^ *$$/d' | awk -F'`' '{print $$2}' | tail -1)
+ifeq ($(PLATFORM),arm)
+  BUILD_MODULE_NAME=voice_service_arm
+else
+  ifeq ($(MODE),gpu)
+	BUILD_MODULE_NAME=voice_service_gpu_$(CUDA_VERSION)
+  else
+    BUILD_MODULE_NAME=voice_service
+  endif
+endif
+
+ifeq ($(PLATFORM),arm)
+	CC=aarch64-linux-gnu-gcc
+	CXX=aarch64-linux-gnu-g++
+	STRIP=aarch64-linux-gnu-strip
+else
+	STRIP=strip
+endif
+
+MAJOR=2
+MINOR=3
+
+APP_DIR := $(CURRENT_DIR)/../../$(PLATFORM)/bin
+OBJS_DIR := $(CURRENT_DIR)/../../$(PLATFORM)/build/$(BUILD_MODULE_NAME)
+THIRD_DIR := $(CURRENT_DIR)/../../$(PLATFORM)/local
+TEST_DIR := $(CURRENT_DIR)/../../$(PLATFORM)/test
+ifeq ($(PLATFORM),arm)
+  THIRD_HOST_DIR := $(THIRD_DIR)/../../amd64/local
+else
+  THIRD_HOST_DIR := $(THIRD_DIR)
+endif
+
+ifeq ($(MODE),gpu)
+  TORCH_ROOT = $(THIRD_DIR)/torch/gpu/$(CUDA_VERSION)
+else
+  TORCH_ROOT = $(THIRD_DIR)/torch/cpu
+endif
+
+CUDA_INCLUDE ?= 
+ifeq ($(MODE),gpu)
+	CUDA_INCLUDE = -I/usr/local/cuda-$(CUDA_VERSION)/include
+endif
+CUDA_LIB ?= 
+ifeq ($(MODE),gpu)
+	CUDA_LIB = -L/usr/local/cuda-$(CUDA_VERSION)/lib64/ -lcudart_static -lcublas_static -lcublasLt_static
+	ifeq ($(CUDA_VERSION),11.3)
+		CUDA_LIB += -lculibos
+	else ifeq ($(CUDA_VERSION),11.4)
+		CUDA_LIB += -lculibos
+	else ifeq ($(CUDA_VERSION),12.4)
+		CUDA_LIB += -lculibos
+    endif
+	CUDA_LIB += -Wl,-rpath=/usr/local/cuda-$(CUDA_VERSION)/lib64/ 
+	#CUDA_LIB += /usr/local/cuda-$(CUDA_VERSION)/lib64/stubs/libnvidia-ml.so
+endif
+INCLUDES += \
+  -I. \
+  -I../common \
+  -I$(OBJS_DIR) \
+  -I$(TORCH_ROOT)/include/ \
+  -I$(TORCH_ROOT)/include/torch/csrc/api/include/ \
+  $(CUDA_INCLUDE) \
+  -I$(THIRD_DIR)/include/eigen3/ \
+  -I$(THIRD_DIR)/include/
+
+#ABSL_LIBS= \
+#  -labsl_civil_time \
+#  -labsl_cord \
+#  -labsl_cord_internal \
+#  -labsl_cordz_functions \
+#  -labsl_cordz_handle \
+#  -labsl_cordz_info \
+#  -labsl_cordz_sample_token \
+#  -labsl_crc32c \
+#  -labsl_crc_cord_state \
+#  -labsl_crc_cpu_detect \
+#  -labsl_crc_internal \
+#  -labsl_die_if_null \
+#  -labsl_exponential_biased \
+#  -labsl_failure_signal_handler \
+#  -labsl_flags_commandlineflag \
+#  -labsl_flags_commandlineflag_internal \
+#  -labsl_flags_config \
+#  -labsl_flags_internal \
+#  -labsl_flags_marshalling \
+#  -labsl_flags_parse \
+#  -labsl_flags_private_handle_accessor \
+#  -labsl_flags_program_name \
+#  -labsl_flags_reflection \
+#  -labsl_flags_usage \
+#  -labsl_flags_usage_internal \
+#  -labsl_graphcycles_internal \
+#  -labsl_hash \
+#  -labsl_city \
+#  -labsl_leak_check \
+#  -labsl_log_initialize \
+#  -labsl_log_internal_message \
+#  -labsl_log_internal_structured_proto \
+#  -labsl_log_internal_check_op \
+#  -labsl_log_internal_conditions \
+#  -labsl_log_internal_format \
+#  -labsl_log_internal_globals \
+#  -labsl_log_internal_log_sink_set \
+#  -labsl_log_internal_nullguard \
+#  -labsl_log_internal_proto \
+#  -labsl_log_severity \
+#  -labsl_log_sink \
+#  -labsl_log_entry \
+#  -labsl_log_flags \
+#  -labsl_log_globals \
+#  -labsl_examine_stack \
+#  -labsl_periodic_sampler \
+#  -labsl_random_distributions \
+#  -labsl_random_internal_distribution_test_util \
+#  -labsl_random_internal_platform \
+#  -labsl_random_internal_randen \
+#  -labsl_random_internal_randen_hwaes \
+#  -labsl_random_internal_randen_hwaes_impl \
+#  -labsl_random_internal_randen_slow \
+#  -labsl_random_internal_seed_material \
+#  -labsl_random_seed_gen_exception \
+#  -labsl_random_seed_sequences \
+#  -labsl_raw_hash_set \
+#  -labsl_raw_logging_internal \
+#  -labsl_hashtablez_sampler \
+#  -labsl_scoped_set_env \
+#  -labsl_spinlock_wait \
+#  -labsl_stacktrace \
+#  -labsl_symbolize \
+#  -labsl_debugging_internal \
+#  -labsl_status \
+#  -labsl_statusor \
+#  -labsl_strerror \
+#  -labsl_str_format_internal \
+#  -labsl_strings \
+#  -labsl_strings_internal \
+#  -labsl_string_view \
+#  -labsl_demangle_internal \
+#  -labsl_demangle_rust \
+#  -labsl_decode_rust_punycode \
+#  -labsl_utf8_for_code_point \
+#  -labsl_malloc_internal \
+#  -labsl_synchronization \
+#  -labsl_kernel_timeout_internal \
+#  -labsl_throw_delegate \
+#  -labsl_int128 \
+#  -labsl_time \
+#  -labsl_time_zone \
+#  -labsl_base
+#  -lre2 $(ABSL_LIBS)
+BASE_LIBS += $(THIRD_DIR)/../lib/libmycommon.a
+BASE_LIBS += \
+  -L$(TORCH_ROOT)/lib -ltorch -ltorch_cpu -ltorch_global_deps -lc10 \
+  $(CUDA_LIB) \
+  -L$(THIRD_DIR)/lib \
+  -lboost_system -lboost_filesystem -lboost_regex \
+  -lpcre2-32 -lpcre2-16 -lpcre2-8 \
+  -licuuc -licuio -licudata \
+  -lleveldb -llz4 -lsnappy \
+  -lglog \
+  -lgtest \
+  -lgflags \
+  -lcurl \
+  -lssl -lcrypto \
+  -lz \
+  -lm \
+  -lrt \
+  -ldl \
+  -lpthread
+
+LIBS += \
+  -L. \
+  $(BASE_LIBS)
+
+ifeq ($(MODE),gpu)
+  CFLAGS += -DUSE_GPU=1 -DCUDA_VERSION=\"$(CUDA_VERSION)\"
+endif
+CFLAGS    += -O2 -g -std=c++17 -fopenmp -static-libstdc++ -static-libgcc
+ifeq ($(PLATFORM),amd64)
+  CFLAGS += -mavx -mavx2
+endif
+CFLAGS	  += -DNDEBUG -DFORTIFY_SOURCE=2 -fPIC
+CFLAGS	  += -Wno-deprecated-declarations
+#CFLAGS    += -DMKL_ILP64 -m64 -I${MKLROOT}/include
+LIBPATHS  +=
+CPPFLAGS  = $(CFLAGS) -std=c++17
+CXXFLAGS  = $(CFLAGS) -std=c++17
+
+SOURCES += \
+  tiktoken.cpp \
+  core_bpe.cpp \
+  main.cpp
+OBJS := $(addprefix $(OBJS_DIR)/,$(patsubst %.cpp,%.o,$(SOURCES)))
+OBJS := $(patsubst %.c,%.o,$(OBJS))
+
+BINS = \
+	$(APP_DIR)/$(BUILD_MODULE_NAME)
+
+all : prep $(BINS) test
+
+.PHONY: prep
+
+prep:
+	@mkdir -p $(OBJS_DIR)
+
+$(APP_DIR)/$(BUILD_MODULE_NAME) : $(OBJS) $(OBJS_DIR)/main.o
+	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib 
+	$(STRIP) $@
+
+test: \
+	$(TEST_DIR)/test_search
+
+$(TEST_DIR)/test_search : $(OBJS_DIR)/test_search.o $(OBJS_DIR)/tiktoken.o $(OBJS_DIR)/core_bpe.o
+	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib -lgtest
+	$(STRIP) $@
+
+$(OBJS_DIR)/%.o:%.cpp
+	@mkdir -p $(shell dirname $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $? -o $@
+$(OBJS_DIR)/%.o:%.cc
+	@mkdir -p $(shell dirname $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $? -o $@
+
+clean:
+	rm -f $(OBJS)
+	rm -f $(OBJS_DIR)/main.o
+	rm -f $(OBJS_DIR)/test_search.o
+	rm -rf rpc_data
+
+distclean:
+	make clean
+	rm -rf $(APP_DIR)

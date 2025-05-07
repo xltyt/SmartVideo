@@ -1,0 +1,60 @@
+[submodule "src/3rd_party/cmake/pkg"]
+	path = src/3rd_party/cmake/pkg
+	url = https://github.com/Kitware/CMake.git
+[submodule "src/3rd_party/rapidjson/pkg"]
+	path = src/3rd_party/rapidjson/pkg
+	url = https://github.com/Tencent/rapidjson
+[submodule "src/3rd_party/openssl/pkg"]
+	path = src/3rd_party/openssl/pkg
+	url = https://github.com/openssl/openssl.git
+[submodule "src/3rd_party/src/3rd_party/curl/pkg"]
+	path = src/3rd_party/curl/pkg
+	url = https://github.com/curl/curl.git
+[submodule "src/3rd_party/pcre/pkg"]
+	path = src/3rd_party/pcre/pkg
+	url = https://github.com/PCRE2Project/pcre2.git
+[submodule "src/3rd_party/boost/pkg"]
+	path = src/3rd_party/boost/pkg
+	url = https://github.com/boostorg/boost.git
+[submodule "src/3rd_party/glog/pkg/gflags"]
+	path = src/3rd_party/glog/pkg/gflags
+	url = https://github.com/gflags/gflags.git
+[submodule "src/3rd_party/glog/pkg/glog"]
+	path = src/3rd_party/glog/pkg/glog
+	url = https://github.com/google/glog.git
+[submodule "src/3rd_party/glog/pkg/gtest"]
+	path = src/3rd_party/glog/pkg/gtest
+	url = https://github.com/google/googletest.git
+[submodule "src/3rd_party/brpc/pkg/zlib"]
+	path = src/3rd_party/zlib/pkg
+	url = https://github.com/madler/zlib.git
+[submodule "src/3rd_party/brpc/pkg/sqlite"]
+	path = src/3rd_party/brpc/pkg/sqlite
+	url = https://github.com/sqlite/sqlite.git
+[submodule "src/3rd_party/brpc/pkg/lz4"]
+	path = src/3rd_party/brpc/pkg/lz4
+	url = https://github.com/lz4/lz4.git
+[submodule "src/3rd_party/brpc/pkg/snappy"]
+	path = src/3rd_party/brpc/pkg/snappy
+	url = https://github.com/google/snappy.git
+[submodule "src/3rd_party/brpc/pkg/leveldb"]
+	path = src/3rd_party/brpc/pkg/leveldb
+	url = https://github.com/google/leveldb.git
+[submodule "src/3rd_party/brpc/pkg/brpc"]
+	path = src/3rd_party/brpc/pkg/brpc
+	url = https://github.com/apache/brpc.git
+[submodule "src/3rd_party/brpc/pkg/protobuf"]
+	path = src/3rd_party/brpc/pkg/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "src/3rd_party/torch/pkg"]
+	path = src/3rd_party/torch/pkg
+	url = https://github.com/pytorch/pytorch.git
+[submodule "src/3rd_party/torchaudio/pkg"]
+	path = src/3rd_party/torchaudio/pkg
+	url = https://github.com/pytorch/audio.git
+[submodule "src/3rd_party/icu/pkg"]
+	path = src/3rd_party/icu/pkg
+	url = https://github.com/unicode-org/icu.git
+[submodule "src/3rd_party/blas/pkg"]
+	path = src/3rd_party/blas/pkg
+	url = https://github.com/OpenMathLib/OpenBLAS.git
