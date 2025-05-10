@@ -196,6 +196,7 @@ CXXFLAGS  = $(CFLAGS) -std=c++17
 
 SOURCES += \
   tiktoken.cpp \
+  whisper_token.cpp \
   core_bpe.cpp \
   main.cpp
 OBJS := $(addprefix $(OBJS_DIR)/,$(patsubst %.cpp,%.o,$(SOURCES)))
@@ -218,7 +219,7 @@ $(APP_DIR)/$(BUILD_MODULE_NAME) : $(OBJS) $(OBJS_DIR)/main.o
 test: \
 	$(TEST_DIR)/test_search
 
-$(TEST_DIR)/test_search : $(OBJS_DIR)/test_search.o $(OBJS_DIR)/tiktoken.o $(OBJS_DIR)/core_bpe.o
+$(TEST_DIR)/test_search : $(OBJS_DIR)/test_search.o $(OBJS_DIR)/tiktoken.o $(OBJS_DIR)/core_bpe.o $(OBJS_DIR)/whisper_token.o
 	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib -lgtest
 	$(STRIP) $@
 

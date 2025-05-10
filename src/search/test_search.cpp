@@ -1,13 +1,14 @@
 /****************************************************\
  *
  * Copyright (C) 2019 All Rights Reserved
- * Last modified: 2025.05.07 18:07:31
+ * Last modified: 2025.05.11 00:15:40
  *
 \****************************************************/
 
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 #include "tiktoken.h"
+#include "whisper_token.h"
 
 TEST(Search, Utf8) {
   {
@@ -127,6 +128,13 @@ TEST(Search, TikTokenEncodingCl100K) {
 }
 
 TEST(Search, TikTokenEncodingR50K) {
+}
+
+TEST(Search, WhisperToken) {
+  const std::string text = "다람쥐 헌 쳇바퀴에 타고파";
+  WhisperToken token(".");
+  std::vector<size_t> multilingual_tokens = token.encode(text);
+  ASSERT_EQ(true, multilingual_tokens == std::vector<size_t>({9835, 22855, 168, 98, 238, 13431, 234, 43517, 229, 47053, 169, 222, 19086, 19840, 1313, 17974}));
 }
 
 TEST(Search, LLM) {
