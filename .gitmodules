@@ -58,3 +58,9 @@
 [submodule "src/3rd_party/blas/pkg"]
 	path = src/3rd_party/blas/pkg
 	url = https://github.com/OpenMathLib/OpenBLAS.git
+[submodule "src/3rd_party/audio/pkg/libsndfile"]
+	path = src/3rd_party/audio/pkg/libsndfile
+	url = https://github.com/libsndfile/libsndfile.git
+[submodule "src/3rd_party/audio/pkg/libsamplerate"]
+	path = src/3rd_party/audio/pkg/libsamplerate
+	url = https://github.com/libsndfile/libsamplerate.git

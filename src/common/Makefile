@@ -54,6 +54,7 @@ CXXFLAGS  = $(CFLAGS) -std=c++17
 
 #etcd_utils.cpp
 SOURCES += \
+  system_utils.cpp \
   base64.cpp \
   url_utils.cpp \
   crypt_utils.cpp \

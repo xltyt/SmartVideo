@@ -43,6 +43,7 @@ ifeq ($(MODE),gpu)
 else
   TORCH_ROOT = $(THIRD_DIR)/torch/cpu
 endif
+TORCH_AUDIO_ROOT = $(THIRD_DIR)/torchaudio/cpu
 
 CUDA_INCLUDE ?= 
 ifeq ($(MODE),gpu)
@@ -67,6 +68,7 @@ INCLUDES += \
   -I$(OBJS_DIR) \
   -I$(TORCH_ROOT)/include/ \
   -I$(TORCH_ROOT)/include/torch/csrc/api/include/ \
+  -I$(TORCH_AUDIO_ROOT)/include/ \
   $(CUDA_INCLUDE) \
   -I$(THIRD_DIR)/include/eigen3/ \
   -I$(THIRD_DIR)/include/
@@ -158,12 +160,15 @@ INCLUDES += \
 #  -lre2 $(ABSL_LIBS)
 BASE_LIBS += $(THIRD_DIR)/../lib/libmycommon.a
 BASE_LIBS += \
+  -L$(TORCH_AUDIO_ROOT)/lib -ltorchaudio \
   -L$(TORCH_ROOT)/lib -ltorch -ltorch_cpu -ltorch_global_deps -lc10 \
   $(CUDA_LIB) \
   -L$(THIRD_DIR)/lib \
+  -lsamplerate -lsndfile \
   -lboost_system -lboost_filesystem -lboost_regex \
   -lpcre2-32 -lpcre2-16 -lpcre2-8 \
   -licuuc -licuio -licudata \
+  -lprotoc -lprotobuf \
   -lleveldb -llz4 -lsnappy \
   -lglog \
   -lgtest \
@@ -195,12 +200,17 @@ CPPFLAGS  = $(CFLAGS) -std=c++17
 CXXFLAGS  = $(CFLAGS) -std=c++17
 
 SOURCES += \
+  audio_utils.cpp \
   tiktoken.cpp \
   whisper_token.cpp \
   core_bpe.cpp \
+  flags.cpp \
   main.cpp
 OBJS := $(addprefix $(OBJS_DIR)/,$(patsubst %.cpp,%.o,$(SOURCES)))
 OBJS := $(patsubst %.c,%.o,$(OBJS))
+
+OBJS_PB := \
+    $(OBJS_DIR)/search.pb.o
 
 BINS = \
 	$(APP_DIR)/$(BUILD_MODULE_NAME)
@@ -212,16 +222,20 @@ all : prep $(BINS) test
 prep:
 	@mkdir -p $(OBJS_DIR)
 
-$(APP_DIR)/$(BUILD_MODULE_NAME) : $(OBJS) $(OBJS_DIR)/main.o
-	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib 
+$(APP_DIR)/$(BUILD_MODULE_NAME) : $(OBJS_PB) $(OBJS) $(OBJS_DIR)/main.o
+	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(THIRD_DIR)/lib/libbrpc.a $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib 
 	$(STRIP) $@
 
 test: \
 	$(TEST_DIR)/test_search
 
-$(TEST_DIR)/test_search : $(OBJS_DIR)/test_search.o $(OBJS_DIR)/tiktoken.o $(OBJS_DIR)/core_bpe.o $(OBJS_DIR)/whisper_token.o
+$(TEST_DIR)/test_search : $(OBJS_DIR)/test_search.o $(OBJS_DIR)/tiktoken.o $(OBJS_DIR)/core_bpe.o $(OBJS_DIR)/whisper_token.o $(OBJS_DIR)/audio_utils.o
 	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib -lgtest
 	$(STRIP) $@
+
+$(OBJS_DIR)/search.pb.o: proto/search.proto
+	$(THIRD_HOST_DIR)/bin/protoc --cpp_out=$(OBJS_DIR) --proto_path=$(CURRENT_DIR)/proto $(CURRENT_DIR)/proto/search.proto
+	$(CC) $(CPPFLAGS) $(INCLUDES) -c $(OBJS_DIR)/search.pb.cc -o $(OBJS_DIR)/search.pb.o
 
 $(OBJS_DIR)/%.o:%.cpp
 	@mkdir -p $(shell dirname $@)
@@ -232,6 +246,7 @@ $(OBJS_DIR)/%.o:%.cc
 
 clean:
 	rm -f $(OBJS)
+	rm -f $(OBJS_DIR)/search.pb.*
 	rm -f $(OBJS_DIR)/main.o
 	rm -f $(OBJS_DIR)/test_search.o
 	rm -rf rpc_data

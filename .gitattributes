@@ -1,3 +1,4 @@
 /src/search/data/*/* binary
+/src/search/data/* binary
 /src/3rd_party/config.guess binary
 /src/3rd_party/config.sub binary

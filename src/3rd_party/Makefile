@@ -26,6 +26,7 @@ prep:
 	@if [ ! -d ../../$(PLATFORM)/local/torch/cpu/include ]; then          cd torch && PLATFORM=$(PLATFORM) bash build.sh; fi
 	@if [ ! -d ../../$(PLATFORM)/local/torchaudio/cpu/include ]; then     cd torchaudio && PLATFORM=$(PLATFORM) bash build.sh; fi
 	@if [ ! -f ../../$(PLATFORM)/local/bin/ffmpeg ]; then                 cd ffmpeg && PLATFORM=$(PLATFORM) bash build.sh; fi
+	@if [ ! -f ../../$(PLATFORM)/local/include/sndfile.h ]; then          cd audio && PLATFORM=$(PLATFORM) bash build.sh; fi
 	##@rm -rf ../../build
 
 clean:

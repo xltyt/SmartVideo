@@ -1,14 +1,18 @@
 /****************************************************\
  *
  * Copyright (C) 2019 All Rights Reserved
- * Last modified: 2025.05.11 00:15:40
+ * Last modified: 2025.05.11 17:14:14
  *
 \****************************************************/
 
 #include <gtest/gtest.h>
 #include <glog/logging.h>
+#include <crypt_utils.h>
+#include <file_utils.h>
+#include <string_utils.h>
 #include "tiktoken.h"
 #include "whisper_token.h"
+#include "audio_utils.h"
 
 TEST(Search, Utf8) {
   {
@@ -135,6 +139,23 @@ TEST(Search, WhisperToken) {
   WhisperToken token(".");
   std::vector<size_t> multilingual_tokens = token.encode(text);
   ASSERT_EQ(true, multilingual_tokens == std::vector<size_t>({9835, 22855, 168, 98, 238, 13431, 234, 43517, 229, 47053, 169, 222, 19086, 19840, 1313, 17974}));
+}
+
+TEST(Search, Wav) {
+  const std::string& path = "data/mda-qmwfy2k746929rxh.mp3";
+  std::string output_path = "out_" + Crypt::gen_random_string(8) + ".wav";
+  ConvertToWav(path, output_path);
+  std::vector<float> result;
+  int ret = LoadWav(output_path, 160000, result);
+  ASSERT_EQ(ret, -1);
+  ret = LoadWav(output_path, 16000, result);
+  ASSERT_EQ(ret, 0);
+  LOG(INFO) << "Len[" << result.size() << "]";
+  unlink(output_path.c_str());
+  mycommon::file_write("data.txt", mycommon::str_join(result, "\n"));
+}
+
+TEST(Search, Text) {
 }
 
 TEST(Search, LLM) {
