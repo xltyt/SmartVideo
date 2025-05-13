@@ -1,7 +1,7 @@
 /****************************************************\
  *
  * Copyright (C) 2019 All Rights Reserved
- * Last modified: 2025.05.11 17:14:14
+ * Last modified: 2025.05.13 10:51:46
  *
 \****************************************************/
 
@@ -13,6 +13,7 @@
 #include "tiktoken.h"
 #include "whisper_token.h"
 #include "audio_utils.h"
+#include "frontend_utils.h"
 
 TEST(Search, Utf8) {
   {
@@ -153,6 +154,93 @@ TEST(Search, Wav) {
   LOG(INFO) << "Len[" << result.size() << "]";
   unlink(output_path.c_str());
   mycommon::file_write("data.txt", mycommon::str_join(result, "\n"));
+}
+
+TEST(Search, FrontendUtils) {
+  ASSERT_EQ(true, contains_chinese("中国"));
+  ASSERT_EQ(true, contains_chinese("1中2国3"));
+  ASSERT_EQ(true, contains_chinese("12国3"));
+  ASSERT_EQ(false, contains_chinese("123"));
+  ASSERT_EQ(false, contains_chinese("a"));
+
+  ASSERT_EQ(true, replace_blank("a b") == "a b");
+  ASSERT_EQ(true, replace_blank("a  b") == "ab");
+  ASSERT_EQ(true, replace_blank("中 国") == "中国");
+  ASSERT_EQ(true, replace_blank("中  国") == "中国");
+  ASSERT_EQ(true, replace_blank("中 a") == "中a");
+  ASSERT_EQ(true, replace_blank("中  a") == "中a");
+  
+  ASSERT_EQ(true, remove_tail_mark("中国，") == "中国。");
+  ASSERT_EQ(true, remove_tail_mark("中国，，") == "中国。");
+  ASSERT_EQ(true, remove_tail_mark("中国，，,") == "中国。");
+  ASSERT_EQ(true, remove_tail_mark("中国，，,、、") == "中国。");
+  ASSERT_EQ(true, remove_tail_mark("中国A，，,、、") == "中国A。");
+  
+  ASSERT_EQ(false, is_only_punctuation("中国"));
+  ASSERT_EQ(true, is_only_punctuation("."));
+  ASSERT_EQ(true, is_only_punctuation("。"));
+  ASSERT_EQ(true, is_only_punctuation("。、."));
+
+  ASSERT_EQ(true, number_to_words((long long)0) == "zero");
+  ASSERT_EQ(true, number_to_words((long long)1) == "one");
+  ASSERT_EQ(true, number_to_words((long long)100) == "one hundred");
+  ASSERT_EQ(true, number_to_words((long long)123) == "one hundred and twenty-three");
+  ASSERT_EQ(true, number_to_words((long long)12345) == "twelve thousand, three hundred and forty-five");
+  ASSERT_EQ(true, number_to_words((long long)-1) == "minus one");
+  
+  ASSERT_EQ(true, number_to_words(123.2) == "one hundred and twenty-three point two");
+  ASSERT_EQ(true, number_to_words(123.23456) == "one hundred and twenty-three point two three four five six");
+  ASSERT_EQ(true, number_to_words(-123.2) == "minus one hundred and twenty-three point two");
+  
+  ASSERT_EQ(true, spell_out_number("A 123 B") == "A one hundred and twenty-three B");
+
+  WhisperToken tokenize(".");
+  {
+    auto result = text_normalize(&tokenize, std::unordered_set<std::string>({"all"}), "中国A，，,、、", false, true);
+    if (auto* str = std::get_if<std::string>(&result)) {
+      const std::string& word = *str;
+      LOG(INFO) << "Match[" << word << "]";
+      ASSERT_EQ(true, word == "中国A。");
+    }
+    else {
+      ASSERT_EQ(false, true);
+    }
+  }
+  {
+    std::string text = "家事国事天下事，让人民过上幸福生活是头等大事。家家户户都盼着孩子能有好的教育，老人能有好的养老服务，年轻人能有更多发展机会。这些朴实的愿望，";
+    auto result = text_normalize(&tokenize, std::unordered_set<std::string>({"all"}), text, true, true);
+    if (auto* vec = std::get_if<std::vector<std::string>>(&result)) {
+      for (auto word : *vec) {
+        LOG(INFO) << "Match[" << word << "]";
+      }
+    }
+    else {
+      ASSERT_EQ(false, true);
+    }
+  }
+  {
+    std::string text = "习近平总书记高度重视新型基础设施发展，不仅对构建新型基础设施体系作出全局谋划，提出“要适度超前，布局有利于引领产业发展和维护国家安全的基础设施”，“打造集约高效、经济适用、智能绿色、安全可靠的现代化基础设施体系”，并对网络强国、数字中国、交通强国、能源强国等作出一系列具体部署，强调要“加快建设高速泛在、天地一体、云网融合、智能敏捷、绿色低碳、安全可控的智能化综合性数字信息基础设施”，为新时代推动新型基础设施发展提供了思想指引和根本遵循。";
+    auto result = text_normalize(&tokenize, std::unordered_set<std::string>({"all"}), text, true, true);
+    if (auto* vec = std::get_if<std::vector<std::string>>(&result)) {
+      for (auto word : *vec) {
+        LOG(INFO) << "Match[" << word << "]";
+      }
+    }
+    else {
+      ASSERT_EQ(false, true);
+    }
+  }
+  {
+    auto result = text_normalize(&tokenize, std::unordered_set<std::string>({"all"}), "中国A，，,、、", true, true);
+    if (auto* vec = std::get_if<std::vector<std::string>>(&result)) {
+      for (auto word : *vec) {
+        LOG(INFO) << "Match[" << word << "]";
+      }
+    }
+    else {
+      ASSERT_EQ(false, true);
+    }
+  }
 }
 
 TEST(Search, Text) {

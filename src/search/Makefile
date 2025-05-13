@@ -200,6 +200,7 @@ CPPFLAGS  = $(CFLAGS) -std=c++17
 CXXFLAGS  = $(CFLAGS) -std=c++17
 
 SOURCES += \
+  frontend_utils.cpp \
   audio_utils.cpp \
   tiktoken.cpp \
   whisper_token.cpp \
@@ -229,7 +230,13 @@ $(APP_DIR)/$(BUILD_MODULE_NAME) : $(OBJS_PB) $(OBJS) $(OBJS_DIR)/main.o
 test: \
 	$(TEST_DIR)/test_search
 
-$(TEST_DIR)/test_search : $(OBJS_DIR)/test_search.o $(OBJS_DIR)/tiktoken.o $(OBJS_DIR)/core_bpe.o $(OBJS_DIR)/whisper_token.o $(OBJS_DIR)/audio_utils.o
+$(TEST_DIR)/test_search : \
+	$(OBJS_DIR)/test_search.o \
+	$(OBJS_DIR)/tiktoken.o \
+	$(OBJS_DIR)/core_bpe.o \
+	$(OBJS_DIR)/whisper_token.o \
+	$(OBJS_DIR)/audio_utils.o \
+	$(OBJS_DIR)/frontend_utils.o
 	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(WEB_LIBPATHS) $(WEB_LIBS) -Wl,-rpath=../lib -Wl,-rpath=lib -lgtest
 	$(STRIP) $@
 
